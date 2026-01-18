@@ -2,7 +2,7 @@ package model;
 
 public class Exemplares extends Livro{
     
-    private quantidadeExemplares;
+    private int quantidadeExemplares;
     private boolean disponibilidade;
 
     public Exemplares (int id, String titulo, String autor, String genero, short ano) {
@@ -17,6 +17,7 @@ public class Exemplares extends Livro{
         this.disponibilidade = disponibilidade;
     }
 }
+
 
 
 
