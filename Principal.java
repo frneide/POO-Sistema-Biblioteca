@@ -1,10 +1,12 @@
+package model;
 import java.util.Scanner;
-import model.*;
 
 public class Principal {
 
     public static void main(String[] args) {
         Biblioteca biblioteca = new Biblioteca();
+        biblioteca.carregarDados();
+
         Scanner sc = new Scanner(System.in);
         int opcao = 0; 
         
@@ -15,8 +17,8 @@ public class Principal {
         biblioteca.adicionarLivro("O Senhor dos Anéis", "Fantasia", "J.R.R. Tolkien", (short) 1954);
         biblioteca.adicionarLivro("1984", "Ficção Científica", "George Orwell", (short) 1949);
         biblioteca.adicionarLivro("O Pequeno Príncipe", "Fábula", "Antoine de Saint-Exupéry", (short) 1943);
-        biblioteca.adicionarLivro("Código Limpo", "Tecnologia", "Robert C. Martin", (short) 2008);
-        biblioteca.adicionarLivro("Harry Potter e a Pedra Filosofal", "Fantasia", "J.K. Rowling", (short) 1997);
+        biblioteca.adicionarLivro("Código Limpo", "T3ecnologia", "Robert C. Martin", (short) 2008);
+        biblioteca.adicionarLivro("Harry Potter e a Pedra Filosof0al", "Fantasia", "J.K. Rowling", (short) 1997);
         biblioteca.adicionarLivro("Vidas Secas", "Romance", "Graciliano Ramos", (short) 1938);
 
 
@@ -70,7 +72,8 @@ public class Principal {
                     listarHistorico(sc, biblioteca);
                     break;
                 case 0:
-                    System.out.println("Saindo...");
+                    System.out.println("Salvando dados e saindo...");
+                    biblioteca.salvarDados(); 
                     break;
                 default:
                     System.out.println("Opção inválida!");
@@ -85,9 +88,14 @@ public class Principal {
         String nome = sc.nextLine();
         System.out.print("Email: ");
         String email = sc.nextLine();
+        System.out.print("Data de nascimento: ");
+        String dataNasc = sc.nextLine();
+        System.out.print("Telefone: ");
+        String telefone = sc.nextLine();
+
 
         int id = biblioteca.gerarIdUsuario();
-        Usuario u = new Usuario(id, nome, email);
+        Usuario u = new Usuario(id, nome, email, dataNasc, telefone);
         biblioteca.cadastrarUsuario(u);
         System.out.println("Usuário cadastrado! ID: " + id);
     }
