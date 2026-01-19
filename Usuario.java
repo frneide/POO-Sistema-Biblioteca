@@ -40,6 +40,7 @@ public class Usuario {
     String d = (dataNasc == null) ? "" : dataNasc;
     String t = (telefone == null) ? "" : telefone;
     
-    return "USUARIO;" + id + ";" + nome + ";" + e + ";" + d + ";" + t;
+        return "USUARIO;" + id + ";" + nome + ";" + e + ";" + d + ";" + t;
+    }
 }
-}
+
