@@ -9,4 +9,9 @@ public class Professor extends Usuario {
     
     public String getSiape() { return siape; }
     public void setSiape(String siape) { this.siape = siape; }
+
+    @Override
+    public String toCSV() {
+        return "PROF;" + getId() + ";" + getNome() + ";" + getEmail() + ";" + getDataNasc() + ";" + getTelefone() + ";" + siape; //
+    }
 }
