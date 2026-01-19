@@ -13,4 +13,9 @@ public class Aluno extends Usuario {
     public void setMatricula(String matricula) { this.matricula = matricula; }
     public String getCurso() { return curso; }
     public void setCurso(String curso) { this.curso = curso; }
+
+        @Override
+    public String toCSV() {
+        return "ALUNO;" + getId() + ";" + getNome() + ";" + getEmail() + ";" + getDataNasc() + ";" + getTelefone() + ";" + matricula + ";" + curso; //
+    }
 }
