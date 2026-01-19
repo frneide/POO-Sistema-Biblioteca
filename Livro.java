@@ -29,9 +29,8 @@ public class Livro {
         this.disponibilidade = disponibilidade; 
     }
 
-     @Override
     public String toCSV() {
-        return "ALUNO;" + getId() + ";" + getNome() + ";" + getEmail() + ";" + getDataNasc() + ";" + getTelefone() + ";" + matricula + ";" + curso; //
+        return id + ";" + titulo + ";" + autor + ";" + genero + ";" + ano + ";" + disponibilidade;
     }
 
     public static Livro fromCSV(String linha) {
@@ -49,4 +48,5 @@ public class Livro {
         return l;
     }
 }
+
 
