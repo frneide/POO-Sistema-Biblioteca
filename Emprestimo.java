@@ -18,4 +18,8 @@ public class Emprestimo {
     public LocalDate getData() {
         return data;
     }
+
+    public String toCSV(int idUsuario) {
+        return idUsuario + ";" + idLivro + ";" + data; //
+    }
 }
