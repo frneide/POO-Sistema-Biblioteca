@@ -1,11 +1,16 @@
 package model;
 import java.util.ArrayList;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 public class Biblioteca {
     private ArrayList<Usuario> usuarios;
     private ArrayList<Livro> livros;
     private int idUsuarioCount = 1;
     private int idLivroCount = 1;
+    private final String ARQUIVO_LIVROS = "livros.txt";
+    private final String ARQUIVO_USUARIOS = "usuarios.txt";
 
     public Biblioteca() {
         usuarios = new ArrayList<>();
@@ -100,5 +105,57 @@ public class Biblioteca {
         }
         System.out.println("ERRO: Livro não encontrado.");
         return false;
+    }
+
+    public void salvarDados() {
+        // Salvar Livros
+        try (PrintWriter writer = new PrintWriter(new FileWriter(ARQUIVO_LIVROS))) {
+            for (Livro l : livros) {
+                writer.println(l.toCSV());
+            }
+            System.out.println("Livros salvos com sucesso.");
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar livros: " + e.getMessage());
+        }
+
+        // Salvar Usuários
+        try (PrintWriter writer = new PrintWriter(new FileWriter(ARQUIVO_USUARIOS))) {
+            for (Usuario u : usuarios) {
+                writer.println(u.toCSV());
+            }
+            System.out.println("Usuários salvos com sucesso.");
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar usuários: " + e.getMessage());
+        }
+    }
+
+    public void carregarDados() {
+        try {
+            // Carregar Livros
+            if (Files.exists(Paths.get("livros.txt"))) {
+                for (String linha : Files.readAllLines(Paths.get("livros.txt"))) {
+                    livros.add(Livro.fromCSV(linha)); 
+                }
+            }
+
+            // Carregar Usuários (Lógica de Herança)
+            if (Files.exists(Paths.get("usuarios.txt"))) {
+                for (String linha : Files.readAllLines(Paths.get("usuarios.txt"))) {
+                    String[] p = linha.split(";");
+                    if (p[0].equals("ALUNO")) {
+                        usuarios.add(new Aluno(Integer.parseInt(p[1]), p[2], p[4], p[5], p[6], p[7])); //
+                    } else if (p[0].equals("PROF")) {
+                        usuarios.add(new Professor(Integer.parseInt(p[1]), p[2], p[4], p[5], p[6])); //
+                    } else {
+                        usuarios.add(new Usuario(Integer.parseInt(p[1]), p[2], p[3])); // [cite: 2]
+                    }
+                }
+            }
+
+            // (Lógica adicional necessária para ler historico.txt)
+            
+        } catch (Exception e) {
+            System.err.println("Aviso: Arquivos não encontrados ou erro na leitura.");
+        }
     }
 }
