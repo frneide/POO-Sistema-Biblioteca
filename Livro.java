@@ -34,4 +34,19 @@ public class Livro {
         return "ALUNO;" + getId() + ";" + getNome() + ";" + getEmail() + ";" + getDataNasc() + ";" + getTelefone() + ";" + matricula + ";" + curso; //
     }
 
+    public static Livro fromCSV(String linha) {
+        String[] partes = linha.split(";");
+        
+        Livro l = new Livro(
+            Integer.parseInt(partes[0]), 
+            partes[1], 
+            partes[2], 
+            partes[3], 
+            Short.parseShort(partes[4]) 
+        );
+        
+        l.setDisponibilidade(Boolean.parseBoolean(partes[5]));
+        return l;
+    }
 }
+
