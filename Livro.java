@@ -28,4 +28,10 @@ public class Livro {
     public void setDisponibilidade(boolean disponibilidade) { 
         this.disponibilidade = disponibilidade; 
     }
+
+     @Override
+    public String toCSV() {
+        return "ALUNO;" + getId() + ";" + getNome() + ";" + getEmail() + ";" + getDataNasc() + ";" + getTelefone() + ";" + matricula + ";" + curso; //
+    }
+
 }
