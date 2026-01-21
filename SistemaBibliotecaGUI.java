@@ -1,5 +1,8 @@
 package model;
 
+import model.Excecoes.EmprestimoInvalido;
+import model.Excecoes.LivroIndisponivel;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -170,12 +173,16 @@ public class SistemaBibliotecaGUI extends JFrame {
         JTextField txtIdLivro = new JTextField();
         JButton btnConfirmar = new JButton("Confirmar Empréstimo");
 
-        panel.add(new JLabel("ID do Usuário:")); panel.add(txtIdUsuario);
-        panel.add(new JLabel("ID do Livro:")); panel.add(txtIdLivro);
-        panel.add(new JLabel("")); panel.add(btnConfirmar);
+        panel.add(new JLabel("ID do Usuário:"));
+        panel.add(txtIdUsuario);
+        panel.add(new JLabel("ID do Livro:"));
+        panel.add(txtIdLivro);
+        panel.add(new JLabel(""));
+        panel.add(btnConfirmar);
 
         btnConfirmar.addActionListener(e -> {
             try {
+                // Converte os campos de texto
                 int idUser = Integer.parseInt(txtIdUsuario.getText());
                 int idLivro = Integer.parseInt(txtIdLivro.getText());
 
@@ -187,20 +194,25 @@ public class SistemaBibliotecaGUI extends JFrame {
                 }
 
                 // 2. Tenta emprestar
-                // O método emprestarLivro já verifica disponibilidade e retorna boolean
-                boolean sucesso = biblioteca.emprestarLivro(u, idLivro);
+                // Como o método agora é "void", ele não retorna 'sucesso'.
+                // Se houver erro, ele pula direto para o 'catch' lá embaixo.
+                biblioteca.emprestarLivro(u, idLivro);
 
-                if (sucesso) {
-                    JOptionPane.showMessageDialog(this, "Empréstimo realizado com sucesso!");
-                } else {
-                    JOptionPane.showMessageDialog(this, "Falha: Livro não encontrado ou indisponível.", "Aviso", JOptionPane.WARNING_MESSAGE);
-                }
+                // 3. Se o código chegar nesta linha, significa que NÃO houve exceção
+                JOptionPane.showMessageDialog(this, "Empréstimo realizado com sucesso!");
+
+                // Limpa os campos após o sucesso
+                txtIdUsuario.setText("");
+                txtIdLivro.setText("");
 
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "IDs devem ser numéricos.", "Erro", JOptionPane.ERROR_MESSAGE);
+            } catch (LivroIndisponivel | EmprestimoInvalido ex) {
+                // Aqui capturamos a mensagem exata que você escreveu no "throw new..."
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro no Empréstimo", JOptionPane.WARNING_MESSAGE);
             }
-        });
 
+        });
         return wrapInPanel(panel);
     }
 
@@ -209,18 +221,20 @@ public class SistemaBibliotecaGUI extends JFrame {
         JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Registrar Devolução"));
 
-        JTextField txtIdUsuario = new JTextField(); // Necessário para buscar o usuário
-        JTextField txtIdLivro = new JTextField();
+        JTextField txtIdUsuarioDev = new JTextField();
+        JTextField txtIdLivroDev = new JTextField();
         JButton btnDevolver = new JButton("Confirmar Devolução");
 
-        panel.add(new JLabel("ID do Usuário:")); panel.add(txtIdUsuario);
-        panel.add(new JLabel("ID do Livro:")); panel.add(txtIdLivro);
+        // ADICIONAMOS OS NOVOS CAMPOS AO PAINEL
+        panel.add(new JLabel("ID do Usuário:")); panel.add(txtIdUsuarioDev);
+        panel.add(new JLabel("ID do Livro:")); panel.add(txtIdLivroDev);
         panel.add(new JLabel("")); panel.add(btnDevolver);
 
         btnDevolver.addActionListener(e -> {
             try {
-                int idUser = Integer.parseInt(txtIdUsuario.getText());
-                int idLivro = Integer.parseInt(txtIdLivro.getText());
+                // USAMOS OS CAMPOS QUE CRIAMOS ACIMA
+                int idUser = Integer.parseInt(txtIdUsuarioDev.getText());
+                int idLivro = Integer.parseInt(txtIdLivroDev.getText());
 
                 Usuario u = biblioteca.buscarUsuario(idUser);
                 if (u == null) {
@@ -228,16 +242,18 @@ public class SistemaBibliotecaGUI extends JFrame {
                     return;
                 }
 
-                boolean sucesso = biblioteca.devolverLivro(u, idLivro);
+                biblioteca.devolverLivro(u, idLivro);
 
-                if (sucesso) {
-                    JOptionPane.showMessageDialog(this, "Livro devolvido com sucesso!");
-                } else {
-                    JOptionPane.showMessageDialog(this, "Falha na devolução. Verifique os dados.", "Erro", JOptionPane.WARNING_MESSAGE);
-                }
+                JOptionPane.showMessageDialog(this, "Livro devolvido com sucesso!");
+
+                // Limpa os campos da tela de devolução
+                txtIdUsuarioDev.setText("");
+                txtIdLivroDev.setText("");
 
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "IDs devem ser numéricos.", "Erro", JOptionPane.ERROR_MESSAGE);
+            } catch (EmprestimoInvalido ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro na Devolução", JOptionPane.WARNING_MESSAGE);
             }
         });
 
@@ -257,7 +273,7 @@ public class SistemaBibliotecaGUI extends JFrame {
                 return false; // Desabilita edição direta na tabela
             }
         };
-        
+
         JTable tabela = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(tabela);
 
@@ -267,9 +283,9 @@ public class SistemaBibliotecaGUI extends JFrame {
         // Ação para carregar dados
         btnAtualizar.addActionListener(e -> {
             model.setRowCount(0); // Limpa tabela
-            
+
             // Requer o método getLivros() na classe Biblioteca
-            ArrayList<Livro> lista = biblioteca.getLivros(); 
+            ArrayList<Livro> lista = biblioteca.getLivros();
 
             if (lista.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Nenhum livro cadastrado.");

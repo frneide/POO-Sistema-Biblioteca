@@ -1,12 +1,13 @@
 package model;
 
+import java.time.LocalDate;
+
 public class Aluno extends Usuario {
     private String matricula;
     private String curso;
 
-    public Aluno(int id, String nome, String email, String dataNasc,
+    public Aluno(int id, String nome, String email, LocalDate dataNasc, // Mude para LocalDate
                  String telefone, String matricula, String curso) {
-
         super(id, nome, email, dataNasc, telefone);
         this.matricula = matricula;
         this.curso = curso;

@@ -1,5 +1,6 @@
 package model;
 
+import java.time.LocalDate;
 import java.util.Scanner;
 import model.Excecoes.LivroIndisponivel;
 import model.Excecoes.EmprestimoInvalido;
@@ -73,19 +74,46 @@ public class Principal {
 
     private static void cadastrarUsuarioMenu(Scanner sc, Biblioteca biblioteca) {
         System.out.println("--- CADASTRO DE USUÁRIO ---");
+        System.out.println("1 - Aluno | 2 - Professor | 3 - Geral");
+        int tipo = sc.nextInt();
+        sc.nextLine();
+
         System.out.print("Nome: ");
         String nome = sc.nextLine();
         System.out.print("Email: ");
         String email = sc.nextLine();
-        System.out.print("Data de nascimento: ");
-        String dataNasc = sc.nextLine();
+
+        // Exemplo de como tratar a data com o novo tipo LocalDate
+        LocalDate dataNasc = null;
+        try {
+            System.out.print("Data de nascimento (AAAA-MM-DD): ");
+            dataNasc = LocalDate.parse(sc.nextLine());
+        } catch (Exception e) {
+            System.out.println("Data inválida! Usando data atual como padrão.");
+            dataNasc = LocalDate.now();
+        }
+
         System.out.print("Telefone: ");
         String telefone = sc.nextLine();
 
         int id = biblioteca.gerarIdUsuario();
-        Usuario usuario = new Usuario(id, nome, email, dataNasc, telefone);
-        biblioteca.cadastrarUsuario(usuario);
+        Usuario usuario;
 
+        if (tipo == 1) {
+            System.out.print("Matrícula: ");
+            String mat = sc.nextLine();
+            System.out.print("Curso: ");
+            String curso = sc.nextLine();
+            usuario = new Aluno(id, nome, email, dataNasc, telefone, mat, curso);
+        } else if (tipo == 2) {
+            System.out.print("SIAPE: ");
+            String siape = sc.nextLine();
+            usuario = new Professor(id, nome, email, dataNasc, telefone, siape);
+        } else {
+            usuario = new Usuario(id, nome, email, dataNasc, telefone);
+        }
+
+        biblioteca.cadastrarUsuario(usuario);
         System.out.println("Usuário cadastrado com sucesso! ID: " + id);
     }
 

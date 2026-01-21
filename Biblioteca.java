@@ -1,9 +1,11 @@
 package model;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import model.Excecoes.LivroIndisponivel;
+import model.Excecoes.EmprestimoInvalido;
 
 public class Biblioteca {
     private ArrayList<Usuario> usuarios;
@@ -47,10 +49,10 @@ public class Biblioteca {
         }
         for (Livro l : livros) {
             System.out.println(
-                "ID: " + l.getId() +
-                " | Título: " + l.getTitulo() +
-                " | Autor: " + l.getAutor() +
-                " | Disp.: " + (l.getDisponibilidade() ? "Sim" : "Não")
+                    "ID: " + l.getId() +
+                            " | Título: " + l.getTitulo() +
+                            " | Autor: " + l.getAutor() +
+                            " | Disp.: " + (l.getDisponibilidade() ? "Sim" : "Não")
             );
         }
     }
@@ -73,46 +75,35 @@ public class Biblioteca {
         }
     }
 
-
-    public boolean emprestarLivro(Usuario u, int idLivro) {
+    public Livro buscarLivro(int id) {
         for (Livro l : livros) {
-            if (l.getId() == idLivro) {
-                try {
-                    Emprestimo novoEmprestimo = new Emprestimo(u, l);
-                    u.adicionarEmprestimo(novoEmprestimo);
-
-                    System.out.println("SUCESSO: Livro '" + l.getTitulo() +
-                            "' emprestado para " + u.getNome());
-                    return true;
-
-                } catch (LivroIndisponivel e) {
-                    System.out.println("ERRO: " + e.getMessage());
-                    return false;
-                }
+            if (l.getId() == id) {
+                return l;
             }
         }
-
-        System.out.println("ERRO: Livro não encontrado!");
-        return false;
+        return null;
     }
 
+    public void emprestarLivro(Usuario usuario, int idLivro) throws LivroIndisponivel, EmprestimoInvalido {
+        Livro livro = buscarLivro(idLivro);
+        if (livro == null) throw new EmprestimoInvalido("Livro não encontrado.");
 
+        Emprestimo e = new Emprestimo(usuario, livro); // O construtor de Emprestimo já chama livro.emprestar()
+        usuario.adicionarEmprestimo(e);
+    }
 
-    public boolean devolverLivro(Usuario u, int idLivro) {
-        for (Livro l : livros) {
-            if (l.getId() == idLivro) {
-                if (!l.getDisponibilidade()) {
-                    l.setDisponibilidade(true);
-                    System.out.println("SUCESSO: Livro '" + l.getTitulo() + "' devolvido!");
-                    return true;
-                } else {
-                    System.out.println("ERRO: Este livro já está disponível!");
-                    return false;
-                }
+    public void devolverLivro(Usuario usuario, int idLivro) throws EmprestimoInvalido {
+        boolean encontrou = false;
+        for (Emprestimo e : usuario.getHistorico()) {
+            if (e.getLivro().getId() == idLivro && e.isAtivo()) {
+                e.devolverLivro(); // Isso chama livro.devolver() que lança EmprestimoInvalido
+                encontrou = true;
+                break;
             }
         }
-        System.out.println("ERRO: Livro não encontrado.");
-        return false;
+        if (!encontrou) {
+            throw new EmprestimoInvalido("Empréstimo ativo não encontrado para este usuário e livro.");
+        }
     }
 
     public void salvarDados() {
@@ -142,7 +133,7 @@ public class Biblioteca {
             // Carregar Livros
             if (Files.exists(Paths.get("livros.txt"))) {
                 for (String linha : Files.readAllLines(Paths.get("livros.txt"))) {
-                    livros.add(Livro.fromCSV(linha)); 
+                    livros.add(Livro.fromCSV(linha));
                 }
             }
 
@@ -150,13 +141,14 @@ public class Biblioteca {
             if (Files.exists(Paths.get("usuarios.txt"))) {
                 for (String linha : Files.readAllLines(Paths.get("usuarios.txt"))) {
                     String[] p = linha.split(";");
+                    LocalDate dataNasc = LocalDate.parse(p[4]);
 
                     if (p[0].equals("ALUNO")) {
                         usuarios.add(new Aluno(
                                 Integer.parseInt(p[1]), // id
                                 p[2],                   // nome
                                 p[3],                   // email
-                                p[4],                   // dataNasc
+                                dataNasc,               // dataNasc
                                 p[5],                   // telefone
                                 p[6],                   // matricula
                                 p[7]                    // curso
@@ -167,16 +159,18 @@ public class Biblioteca {
                                 Integer.parseInt(p[1]), // id
                                 p[2],                   // nome
                                 p[3],                   // email
-                                p[4],                   // dataNasc
-                                p[5]                    // telefone
+                                dataNasc,               // dataNasc
+                                p[5],                   // telefone
+                                p[6]                    // siape
                         ));
 
                     } else {
+
                         usuarios.add(new Usuario(
                                 Integer.parseInt(p[1]), // id
                                 p[2],                   // nome
                                 p[3],                   // email
-                                p[4],                   // dataNasc
+                                dataNasc,               // dataNasc (Agora como LocalDate!)
                                 p[5]                    // telefone
                         ));
                     }
@@ -185,9 +179,35 @@ public class Biblioteca {
 
 
             // (Lógica adicional necessária para ler historico.txt)
-            
+
         } catch (Exception e) {
             System.err.println("Aviso: Arquivos não encontrados ou erro na leitura.");
         }
+
+        // (Lógica para atualizar os contadores)
+
+        int maiorIdLivro = 0;
+        for (Livro l : livros) {
+            if (l.getId() > maiorIdLivro) {
+                maiorIdLivro = l.getId();
+            }
+        }
+        this.idLivroCount = maiorIdLivro + 1;
+
+
+        int maiorIdUsuario = 0;
+        for (Usuario u : usuarios) {
+            if (u.getId() > maiorIdUsuario) {
+                maiorIdUsuario = u.getId();
+            }
+        }
+        this.idUsuarioCount = maiorIdUsuario + 1;
     }
+
+    public ArrayList<Livro> getLivros() {
+        return livros;
+    }
+
+
+
 }

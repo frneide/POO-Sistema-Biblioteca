@@ -46,7 +46,7 @@ public class Livro {
         if (disponibilidade) {
             throw new EmprestimoInvalido("Livro já está disponível.");
         }
-        disponibilidade = true;
+        this.disponibilidade = true;
     }
 
     public String toCSV() {
