@@ -1,7 +1,7 @@
 package model;
 
 import model.Excecoes.EmprestimoInvalido;
-import model.Excecoes.LivroIndisponivel;
+//import model.Excecoes.LivroIndisponivel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -12,11 +12,11 @@ import java.util.ArrayList;
 public class SistemaBibliotecaGUI extends JFrame {
 
     // Instância da "Fachada" do sistema
-    private Biblioteca biblioteca;
+    private final Biblioteca biblioteca;
 
     // Componentes de navegação
-    private JPanel mainPanel;
-    private CardLayout cardLayout;
+    private final JPanel mainPanel;
+    private final CardLayout cardLayout;
 
     public SistemaBibliotecaGUI() {
         // Inicializa a regra de negócio
@@ -132,33 +132,103 @@ public class SistemaBibliotecaGUI extends JFrame {
 
     // --- TELA 2: CADASTRO DE USUÁRIO ---
     private JPanel createPanelCadastroUsuario() {
-        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Novo Usuário"));
+
+        // 1. Seletor de Tipo
+        String[] tipos = {"Geral", "Aluno", "Professor"};
+        JComboBox<String> cbTipo = new JComboBox<>(tipos);
 
         JTextField txtNome = new JTextField();
         JTextField txtEmail = new JTextField();
+
+        // 2. Campos "Extras"
+        JTextField txtExtra1 = new JTextField(); // Matrícula ou SIAPE
+        JTextField txtExtra2 = new JTextField(); // Curso
+
+        JLabel lblExtra1 = new JLabel("Matrícula/SIAPE:");
+        JLabel lblExtra2 = new JLabel("Curso:");
+
         JButton btnSalvar = new JButton("Salvar Usuário");
 
+        // --- Lógica Visual (O Pulo do Gato) ---
+        // Define o comportamento inicial (Geral selecionado -> tudo bloqueado)
+        txtExtra1.setEnabled(false);
+        txtExtra2.setEnabled(false);
+        lblExtra1.setText("---");
+        lblExtra2.setText("---");
+
+        // Adiciona o evento de troca
+        cbTipo.addActionListener(e -> {
+            String tipo = (String) cbTipo.getSelectedItem();
+
+            // Limpa os campos para evitar confusão visual
+            txtExtra1.setText("");
+            txtExtra2.setText("");
+
+            if ("Aluno".equals(tipo)) {
+                // Aluno: Tudo liberado
+                txtExtra1.setEnabled(true);
+                lblExtra1.setText("Matrícula:");
+
+                txtExtra2.setEnabled(true);
+                lblExtra2.setText("Curso:");
+
+            } else if ("Professor".equals(tipo)) {
+                // Professor: Só libera o primeiro campo (SIAPE)
+                txtExtra1.setEnabled(true);
+                lblExtra1.setText("SIAPE:");
+
+                txtExtra2.setEnabled(false); // Bloqueia curso
+                lblExtra2.setText("---");
+
+            } else {
+                // Geral: Bloqueia tudo
+                txtExtra1.setEnabled(false);
+                lblExtra1.setText("---");
+
+                txtExtra2.setEnabled(false);
+                lblExtra2.setText("---");
+            }
+        });
+
+        // --- Adicionando ao Painel ---
+        panel.add(new JLabel("Tipo de Usuário:")); panel.add(cbTipo);
         panel.add(new JLabel("Nome Completo:")); panel.add(txtNome);
         panel.add(new JLabel("E-mail:")); panel.add(txtEmail);
+        panel.add(lblExtra1); panel.add(txtExtra1);
+        panel.add(lblExtra2); panel.add(txtExtra2);
         panel.add(new JLabel("")); panel.add(btnSalvar);
 
+        // --- Lógica de Salvar ---
         btnSalvar.addActionListener(e -> {
             String nome = txtNome.getText();
             String email = txtEmail.getText();
+            String tipoSelecionado = (String) cbTipo.getSelectedItem();
 
             if(nome.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Nome é obrigatório.", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // Integração: Gera ID e salva
             int id = biblioteca.gerarIdUsuario();
-            Usuario u = new Usuario(id, nome, email);
-            biblioteca.cadastrarUsuario(u);
+            Usuario novoUsuario = null;
 
-            JOptionPane.showMessageDialog(this, "Usuário cadastrado! ID gerado: " + id);
+            if ("Aluno".equals(tipoSelecionado)) {
+                novoUsuario = new Aluno(id, nome, email, java.time.LocalDate.now(), "", txtExtra1.getText(), txtExtra2.getText());
+            } else if ("Professor".equals(tipoSelecionado)) {
+                novoUsuario = new Professor(id, nome, email, java.time.LocalDate.now(), "", txtExtra1.getText());
+            } else {
+                novoUsuario = new Usuario(id, nome, email);
+            }
+
+            biblioteca.cadastrarUsuario(novoUsuario);
+            biblioteca.salvarDados();
+            JOptionPane.showMessageDialog(this, "Usuário (" + tipoSelecionado + ") cadastrado!");
+
+            // Reseta o formulário para o estado padrão (Geral)
             txtNome.setText(""); txtEmail.setText("");
+            cbTipo.setSelectedIndex(0);
         });
 
         return wrapInPanel(panel);
@@ -169,47 +239,26 @@ public class SistemaBibliotecaGUI extends JFrame {
         JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Registrar Empréstimo"));
 
-        JTextField txtIdUsuario = new JTextField();
-        JTextField txtIdLivro = new JTextField();
+        JTextField txtIdUserEmp = new JTextField(); // Nome único para esta tela
+        JTextField txtIdLivroEmp = new JTextField();
         JButton btnConfirmar = new JButton("Confirmar Empréstimo");
 
-        panel.add(new JLabel("ID do Usuário:"));
-        panel.add(txtIdUsuario);
-        panel.add(new JLabel("ID do Livro:"));
-        panel.add(txtIdLivro);
-        panel.add(new JLabel(""));
-        panel.add(btnConfirmar);
+        panel.add(new JLabel("ID do Usuário:")); panel.add(txtIdUserEmp);
+        panel.add(new JLabel("ID do Livro:")); panel.add(txtIdLivroEmp);
+        panel.add(new JLabel("")); panel.add(btnConfirmar);
 
         btnConfirmar.addActionListener(e -> {
             try {
-                // Converte os campos de texto
-                int idUser = Integer.parseInt(txtIdUsuario.getText());
-                int idLivro = Integer.parseInt(txtIdLivro.getText());
+                int idU = Integer.parseInt(txtIdUserEmp.getText());
+                int idL = Integer.parseInt(txtIdLivroEmp.getText());
+                Usuario u = biblioteca.buscarUsuario(idU);
+                if (u == null) throw new EmprestimoInvalido("Utilizador não encontrado.");
 
-                // 1. Busca o objeto Usuário
-                Usuario u = biblioteca.buscarUsuario(idUser);
-                if (u == null) {
-                    JOptionPane.showMessageDialog(this, "Usuário não encontrado!", "Erro", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                // 2. Tenta emprestar
-                biblioteca.emprestarLivro(u, idLivro);
-
-                // 3. Se o código chegar nesta linha, significa que NÃO houve exceção
+                biblioteca.emprestarLivro(u, idL);
                 JOptionPane.showMessageDialog(this, "Empréstimo realizado com sucesso!");
-
-                // Limpa os campos após o sucesso
-                txtIdUsuario.setText("");
-                txtIdLivro.setText("");
-
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "IDs devem ser numéricos.", "Erro", JOptionPane.ERROR_MESSAGE);
-            } catch (LivroIndisponivel | EmprestimoInvalido ex) {
-                // Aqui capturamos a mensagem exata que você escreveu no "throw new..."
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro no Empréstimo", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
-
         });
         return wrapInPanel(panel);
     }
@@ -219,92 +268,111 @@ public class SistemaBibliotecaGUI extends JFrame {
         JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Registrar Devolução"));
 
-        JTextField txtIdUsuarioDev = new JTextField();
+        JTextField txtIdUserDev = new JTextField(); // Nome único para esta tela
         JTextField txtIdLivroDev = new JTextField();
         JButton btnDevolver = new JButton("Confirmar Devolução");
 
-        // ADICIONAMOS OS NOVOS CAMPOS AO PAINEL
-        panel.add(new JLabel("ID do Usuário:")); panel.add(txtIdUsuarioDev);
+        panel.add(new JLabel("ID do Usuário:")); panel.add(txtIdUserDev);
         panel.add(new JLabel("ID do Livro:")); panel.add(txtIdLivroDev);
         panel.add(new JLabel("")); panel.add(btnDevolver);
 
         btnDevolver.addActionListener(e -> {
             try {
-                // USAMOS OS CAMPOS QUE CRIAMOS ACIMA
-                int idUser = Integer.parseInt(txtIdUsuarioDev.getText());
-                int idLivro = Integer.parseInt(txtIdLivroDev.getText());
+                int idU = Integer.parseInt(txtIdUserDev.getText());
+                int idL = Integer.parseInt(txtIdLivroDev.getText());
+                Usuario u = biblioteca.buscarUsuario(idU);
+                if (u == null) throw new EmprestimoInvalido("Utilizador não encontrado.");
 
-                Usuario u = biblioteca.buscarUsuario(idUser);
-                if (u == null) {
-                    JOptionPane.showMessageDialog(this, "Usuário não encontrado!", "Erro", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                biblioteca.devolverLivro(u, idLivro);
-
+                biblioteca.devolverLivro(u, idL);
                 JOptionPane.showMessageDialog(this, "Livro devolvido com sucesso!");
-
-                // Limpa os campos da tela de devolução
-                txtIdUsuarioDev.setText("");
-                txtIdLivroDev.setText("");
-
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "IDs devem ser numéricos.", "Erro", JOptionPane.ERROR_MESSAGE);
-            } catch (EmprestimoInvalido ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro na Devolução", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
-
         return wrapInPanel(panel);
     }
 
     // --- TELA 5: LISTAGEM ---
+    // Em model/SistemaBibliotecaGUI.java
+
     private JPanel createPanelListagem() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createTitledBorder("Acervo da Biblioteca"));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Relatórios e Listagens"));
 
-        // Modelo da tabela
-        String[] colunas = {"ID", "Título", "Autor", "Gênero", "Ano", "Disponível"};
-        DefaultTableModel model = new DefaultTableModel(colunas, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Desabilita edição direta na tabela
-            }
-        };
+        JTabbedPane tabbedPane = new JTabbedPane();
 
-        JTable tabela = new JTable(model);
-        JScrollPane scrollPane = new JScrollPane(tabela);
+        // --- ABA 1: LIVROS ---
+        String[] colLivros = {"ID", "Título", "Autor", "Gênero", "Ano", "Disponível"};
+        DefaultTableModel modelLivros = new DefaultTableModel(colLivros, 0);
+        JTable tableLivros = new JTable(modelLivros);
+        JPanel pnlLivros = new JPanel(new BorderLayout());
+        pnlLivros.add(new JScrollPane(tableLivros), BorderLayout.CENTER);
 
-        JButton btnAtualizar = new JButton("Atualizar Lista");
-        btnAtualizar.setFont(new Font("Arial", Font.BOLD, 14));
-
-        // Ação para carregar dados
-        btnAtualizar.addActionListener(e -> {
-            model.setRowCount(0); // Limpa tabela
-
-            // Requer o método getLivros() na classe Biblioteca
-            ArrayList<Livro> lista = biblioteca.getLivros();
-
-            if (lista.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Nenhum livro cadastrado.");
-                return;
-            }
-
-            for (Livro l : lista) {
-                model.addRow(new Object[]{
-                    l.getId(),
-                    l.getTitulo(),
-                    l.getAutor(),
-                    l.getGenero(),
-                    l.getAno(),
-                    l.getDisponibilidade() ? "Sim" : "Não"
-                });
+        JButton btnAtLivros = new JButton("Atualizar Livros");
+        btnAtLivros.addActionListener(e -> {
+            modelLivros.setRowCount(0);
+            for (Livro l : biblioteca.getLivros()) {
+                modelLivros.addRow(new Object[]{l.getId(), l.getTitulo(), l.getAutor(), l.getGenero(), l.getAno(), l.getDisponibilidade() ? "Sim" : "Não"});
             }
         });
+        pnlLivros.add(btnAtLivros, BorderLayout.SOUTH);
+        tabbedPane.addTab("Livros", pnlLivros);
 
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(btnAtualizar, BorderLayout.SOUTH);
+        // --- ABA 2: USUÁRIOS (Resolve sua pendência de listar usuários) ---
+        String[] colUsers = {"ID", "Tipo", "Nome", "Email", "Extra (Mat/Siape)"};
+        DefaultTableModel modelUsers = new DefaultTableModel(colUsers, 0);
+        JTable tableUsers = new JTable(modelUsers);
+        JPanel pnlUsers = new JPanel(new BorderLayout());
+        pnlUsers.add(new JScrollPane(tableUsers), BorderLayout.CENTER);
 
+        JButton btnAtUsers = new JButton("Atualizar Usuários");
+        btnAtUsers.addActionListener(e -> {
+            modelUsers.setRowCount(0);
+            // Precisamos criar um método getUsuarios() na classe Biblioteca (veja passo 4 abaixo)
+            for (Usuario u : biblioteca.getUsuarios()) {
+                String tipo = "Geral";
+                String extra = "-";
+
+                if (u instanceof Aluno) {
+                    tipo = "Aluno";
+                    extra = ((Aluno) u).getMatricula();
+                } else if (u instanceof Professor) {
+                    tipo = "Professor";
+                    extra = ((Professor) u).getSiape();
+                }
+
+                modelUsers.addRow(new Object[]{u.getId(), tipo, u.getNome(), u.getEmail(), extra});
+            }
+        });
+        pnlUsers.add(btnAtUsers, BorderLayout.SOUTH);
+        tabbedPane.addTab("Usuários", pnlUsers);
+
+        // --- ABA 3: EMPRÉSTIMOS (Resolve a pendência de lista de empréstimos) ---
+        String[] colEmp = {"Livro", "Usuário", "Data Emp.", "Status"};
+        DefaultTableModel modelEmp = new DefaultTableModel(colEmp, 0);
+        JTable tableEmp = new JTable(modelEmp);
+        JPanel pnlEmp = new JPanel(new BorderLayout());
+        pnlEmp.add(new JScrollPane(tableEmp), BorderLayout.CENTER);
+
+        JButton btnAtEmp = new JButton("Atualizar Empréstimos");
+        btnAtEmp.addActionListener(e -> {
+            modelEmp.setRowCount(0);
+            // Varre todos os usuários para pegar o histórico
+            for (Usuario u : biblioteca.getUsuarios()) {
+                for (Emprestimo emp : u.getHistorico()) {
+                    modelEmp.addRow(new Object[]{
+                            emp.getLivro().getTitulo(),
+                            u.getNome(),
+                            emp.getDataEmprestimo(),
+                            emp.isAtivo() ? "Em Aberto" : "Devolvido" // Resolve lista de devolvidos
+                    });
+                }
+            }
+        });
+        pnlEmp.add(btnAtEmp, BorderLayout.SOUTH);
+        tabbedPane.addTab("Histórico", pnlEmp);
+
+        panel.add(tabbedPane, BorderLayout.CENTER);
         return panel;
     }
 
