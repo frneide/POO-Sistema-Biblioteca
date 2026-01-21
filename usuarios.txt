@@ -1,0 +1,3 @@
+USUARIO;1;lucas;lucas@gmail.com;2026-01-21;
+ALUNO;2;paulo;paulo@gmail.com;2026-01-21;;12312;ES
+PROF;3;Caio;CaioProf@gmail.com;2026-01-21;;012312
