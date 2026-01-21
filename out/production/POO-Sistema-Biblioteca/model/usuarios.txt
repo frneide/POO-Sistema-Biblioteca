@@ -1,2 +1,1 @@
-ALUNO;1;gg;ggdacosta@gmail.com;2012-12-12;86981632988;67566;cc
-PROF;2;carlos;calor.com@awdsad.gov;2021-12-12;91293129332;09092
+USUARIO;1;wadsa;awdasd;2026-01-21;
