@@ -1,5 +1,8 @@
 package model;
+
 import java.util.Scanner;
+import model.Excecoes.LivroIndisponivel;
+import model.Excecoes.EmprestimoInvalido;
 
 public class Principal {
 
@@ -8,19 +11,14 @@ public class Principal {
         biblioteca.carregarDados();
 
         Scanner sc = new Scanner(System.in);
-        int opcao = 0; 
-        
+        int opcao = 0;
+
+        // Livros iniciais
         biblioteca.adicionarLivro("Java Básico", "Deitel", "Programação", (short) 2019);
         biblioteca.adicionarLivro("Clean Code", "Robert C. Martin", "Engenharia", (short) 2008);
         biblioteca.adicionarLivro("O Senhor dos Anéis", "Tolkien", "Fantasia", (short) 1954);
-        biblioteca.adicionarLivro("Dom Casmurro", "Romance", "Machado de Assis", (short) 1899);
-        biblioteca.adicionarLivro("O Senhor dos Anéis", "Fantasia", "J.R.R. Tolkien", (short) 1954);
-        biblioteca.adicionarLivro("1984", "Ficção Científica", "George Orwell", (short) 1949);
-        biblioteca.adicionarLivro("O Pequeno Príncipe", "Fábula", "Antoine de Saint-Exupéry", (short) 1943);
-        biblioteca.adicionarLivro("Código Limpo", "T3ecnologia", "Robert C. Martin", (short) 2008);
-        biblioteca.adicionarLivro("Harry Potter e a Pedra Filosof0al", "Fantasia", "J.K. Rowling", (short) 1997);
-        biblioteca.adicionarLivro("Vidas Secas", "Romance", "Graciliano Ramos", (short) 1938);
-
+        biblioteca.adicionarLivro("Dom Casmurro", "Machado de Assis", "Romance", (short) 1899);
+        biblioteca.adicionarLivro("1984", "George Orwell", "Ficção Científica", (short) 1949);
 
         do {
             System.out.println("\n===== MENU BIBLIOTECA =====");
@@ -32,10 +30,10 @@ public class Principal {
             System.out.println("6 - Ver histórico de empréstimos");
             System.out.println("0 - Sair");
             System.out.print("Opção: ");
-            
+
             try {
                 opcao = sc.nextInt();
-                sc.nextLine(); 
+                sc.nextLine(); // limpa buffer
             } catch (Exception e) {
                 System.out.println("Digite apenas números.");
                 sc.nextLine();
@@ -47,19 +45,9 @@ public class Principal {
                     cadastrarUsuarioMenu(sc, biblioteca);
                     break;
                 case 2:
-                    System.out.println("--- NOVO LIVRO ---");
-                    System.out.print("Título: ");
-                    String titulo = sc.nextLine();
-                    System.out.print("Autor: ");
-                    String autor = sc.nextLine();
-                    System.out.print("Gênero: ");
-                    String genero = sc.nextLine();
-                    System.out.print("Ano: ");
-                    short ano = sc.nextShort();
-                    biblioteca.adicionarLivro(titulo, autor, genero, ano);
+                    adicionarLivroMenu(sc, biblioteca);
                     break;
                 case 3:
-                    System.out.println("--- LISTA DE LIVROS ---");
                     biblioteca.listarLivros();
                     break;
                 case 4:
@@ -73,12 +61,13 @@ public class Principal {
                     break;
                 case 0:
                     System.out.println("Salvando dados e saindo...");
-                    biblioteca.salvarDados(); 
+                    biblioteca.salvarDados();
                     break;
                 default:
                     System.out.println("Opção inválida!");
             }
         } while (opcao != 0);
+
         sc.close();
     }
 
@@ -93,55 +82,90 @@ public class Principal {
         System.out.print("Telefone: ");
         String telefone = sc.nextLine();
 
-
         int id = biblioteca.gerarIdUsuario();
-        Usuario u = new Usuario(id, nome, email, dataNasc, telefone);
-        biblioteca.cadastrarUsuario(u);
-        System.out.println("Usuário cadastrado! ID: " + id);
+        Usuario usuario = new Usuario(id, nome, email, dataNasc, telefone);
+        biblioteca.cadastrarUsuario(usuario);
+
+        System.out.println("Usuário cadastrado com sucesso! ID: " + id);
+    }
+
+    private static void adicionarLivroMenu(Scanner sc, Biblioteca biblioteca) {
+        System.out.println("--- NOVO LIVRO ---");
+        System.out.print("Título: ");
+        String titulo = sc.nextLine();
+        System.out.print("Autor: ");
+        String autor = sc.nextLine();
+        System.out.print("Gênero: ");
+        String genero = sc.nextLine();
+        System.out.print("Ano: ");
+        short ano = sc.nextShort();
+        sc.nextLine();
+
+        biblioteca.adicionarLivro(titulo, autor, genero, ano);
+        System.out.println("Livro adicionado com sucesso!");
     }
 
     private static void realizarEmprestimo(Scanner sc, Biblioteca biblioteca) {
         System.out.println("--- EMPRÉSTIMO ---");
         System.out.print("ID do Usuário: ");
         int idUser = sc.nextInt();
-        
-        Usuario usuarioEncontrado = biblioteca.buscarUsuario(idUser);
+        sc.nextLine();
 
-        if (usuarioEncontrado == null) {
+        Usuario usuario = biblioteca.buscarUsuario(idUser);
+        if (usuario == null) {
             System.out.println("Erro: Usuário não encontrado.");
             return;
         }
 
         System.out.print("ID do Livro: ");
         int idLivro = sc.nextInt();
-        biblioteca.emprestarLivro(usuarioEncontrado, idLivro);
+        sc.nextLine();
+
+        try {
+            biblioteca.emprestarLivro(usuario, idLivro);
+            System.out.println("Empréstimo realizado com sucesso!");
+        } catch (LivroIndisponivel e) {
+            System.out.println("Erro: " + e.getMessage());
+        } catch (EmprestimoInvalido e) {
+            System.out.println("Erro: " + e.getMessage());
+        }
     }
 
     private static void realizarDevolucao(Scanner sc, Biblioteca biblioteca) {
         System.out.println("--- DEVOLUÇÃO ---");
         System.out.print("ID do Usuário: ");
         int idUser = sc.nextInt();
-        
-        Usuario usuarioEncontrado = biblioteca.buscarUsuario(idUser);
-        if (usuarioEncontrado == null) {
+        sc.nextLine();
+
+        Usuario usuario = biblioteca.buscarUsuario(idUser);
+        if (usuario == null) {
             System.out.println("Erro: Usuário não encontrado.");
             return;
         }
 
         System.out.print("ID do Livro: ");
         int idLivro = sc.nextInt();
-        biblioteca.devolverLivro(usuarioEncontrado, idLivro);
+        sc.nextLine();
+
+        try {
+            biblioteca.devolverLivro(usuario, idLivro);
+            System.out.println("Livro devolvido com sucesso!");
+        } catch (EmprestimoInvalido e) {
+            System.out.println("Erro: " + e.getMessage());
+        }
     }
 
     private static void listarHistorico(Scanner sc, Biblioteca biblioteca) {
         System.out.print("ID do Usuário: ");
         int idUser = sc.nextInt();
-        Usuario usuarioEncontrado = biblioteca.buscarUsuario(idUser);
+        sc.nextLine();
 
-        if (usuarioEncontrado != null) {
-            biblioteca.listarEmprestimosUsuario(usuarioEncontrado);
-        } else {
+        Usuario usuario = biblioteca.buscarUsuario(idUser);
+        if (usuario == null) {
             System.out.println("Usuário não encontrado.");
+            return;
         }
+
+        biblioteca.listarEmprestimosUsuario(usuario);
     }
 }

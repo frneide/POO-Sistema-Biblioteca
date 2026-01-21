@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import model.Excecoes.LivroIndisponivel;
 
 public class Biblioteca {
     private ArrayList<Usuario> usuarios;
@@ -56,39 +57,46 @@ public class Biblioteca {
 
     public void listarEmprestimosUsuario(Usuario u) {
         System.out.println("\nEmpréstimos de: " + u.getNome());
+
         if (u.getHistorico().isEmpty()) {
-            System.out.println("Nenhum empréstimo ativo.");
+            System.out.println("Nenhum empréstimo registrado.");
             return;
         }
 
         for (Emprestimo e : u.getHistorico()) {
-            for (Livro l : livros) {
-                if (l.getId() == e.getIdLivro()) {
-                    System.out.println("Livro: " + l.getTitulo() + " | Data: " + e.getData());
-                }
-            }
+            Livro l = e.getLivro();
+
+            System.out.println(
+                    "Livro: " + l.getTitulo() +
+                            " | Data do empréstimo: " + e.getDataEmprestimo()
+            );
         }
     }
+
 
     public boolean emprestarLivro(Usuario u, int idLivro) {
         for (Livro l : livros) {
             if (l.getId() == idLivro) {
-                if (l.getDisponibilidade()) {
-                    l.setDisponibilidade(false);
-                    Emprestimo novoEmprestimo = new Emprestimo(l.getId());
+                try {
+                    Emprestimo novoEmprestimo = new Emprestimo(u, l);
                     u.adicionarEmprestimo(novoEmprestimo);
-                    
-                    System.out.println("SUCESSO: Livro '" + l.getTitulo() + "' emprestado para " + u.getNome());
+
+                    System.out.println("SUCESSO: Livro '" + l.getTitulo() +
+                            "' emprestado para " + u.getNome());
                     return true;
-                } else {
-                    System.out.println("ERRO: Este livro já está emprestado!");
+
+                } catch (LivroIndisponivel e) {
+                    System.out.println("ERRO: " + e.getMessage());
                     return false;
                 }
             }
         }
+
         System.out.println("ERRO: Livro não encontrado!");
         return false;
     }
+
+
 
     public boolean devolverLivro(Usuario u, int idLivro) {
         for (Livro l : livros) {
@@ -142,15 +150,39 @@ public class Biblioteca {
             if (Files.exists(Paths.get("usuarios.txt"))) {
                 for (String linha : Files.readAllLines(Paths.get("usuarios.txt"))) {
                     String[] p = linha.split(";");
+
                     if (p[0].equals("ALUNO")) {
-                        usuarios.add(new Aluno(Integer.parseInt(p[1]), p[2], p[4], p[5], p[6], p[7])); //
+                        usuarios.add(new Aluno(
+                                Integer.parseInt(p[1]), // id
+                                p[2],                   // nome
+                                p[3],                   // email
+                                p[4],                   // dataNasc
+                                p[5],                   // telefone
+                                p[6],                   // matricula
+                                p[7]                    // curso
+                        ));
+
                     } else if (p[0].equals("PROF")) {
-                        usuarios.add(new Professor(Integer.parseInt(p[1]), p[2], p[4], p[5], p[6])); //
+                        usuarios.add(new Professor(
+                                Integer.parseInt(p[1]), // id
+                                p[2],                   // nome
+                                p[3],                   // email
+                                p[4],                   // dataNasc
+                                p[5]                    // telefone
+                        ));
+
                     } else {
-                        usuarios.add(new Usuario(Integer.parseInt(p[1]), p[2], p[3])); // [cite: 2]
+                        usuarios.add(new Usuario(
+                                Integer.parseInt(p[1]), // id
+                                p[2],                   // nome
+                                p[3],                   // email
+                                p[4],                   // dataNasc
+                                p[5]                    // telefone
+                        ));
                     }
                 }
             }
+
 
             // (Lógica adicional necessária para ler historico.txt)
             

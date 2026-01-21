@@ -1,4 +1,6 @@
 package model;
+import model.Excecoes.LivroIndisponivel;
+import model.Excecoes.EmprestimoInvalido;
 
 public class Livro {
 
@@ -27,6 +29,24 @@ public class Livro {
     public boolean getDisponibilidade() { return disponibilidade; }
     public void setDisponibilidade(boolean disponibilidade) { 
         this.disponibilidade = disponibilidade; 
+    }
+
+    public boolean estaDisponivel() {
+        return disponibilidade;
+    }
+
+    public void emprestar() throws LivroIndisponivel {
+        if (!disponibilidade) {
+            throw new LivroIndisponivel();
+        }
+        disponibilidade = false;
+    }
+
+    public void devolver() throws EmprestimoInvalido {
+        if (disponibilidade) {
+            throw new EmprestimoInvalido("Livro já está disponível.");
+        }
+        disponibilidade = true;
     }
 
     public String toCSV() {
