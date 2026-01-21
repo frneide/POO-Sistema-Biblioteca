@@ -194,8 +194,6 @@ public class SistemaBibliotecaGUI extends JFrame {
                 }
 
                 // 2. Tenta emprestar
-                // Como o método agora é "void", ele não retorna 'sucesso'.
-                // Se houver erro, ele pula direto para o 'catch' lá embaixo.
                 biblioteca.emprestarLivro(u, idLivro);
 
                 // 3. Se o código chegar nesta linha, significa que NÃO houve exceção
