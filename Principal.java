@@ -15,11 +15,11 @@ public class Principal {
         int opcao = 0;
 
         // Livros iniciais
-        biblioteca.adicionarLivro("Java Básico", "Deitel", "Programação", (short) 2019);
-        biblioteca.adicionarLivro("Clean Code", "Robert C. Martin", "Engenharia", (short) 2008);
-        biblioteca.adicionarLivro("O Senhor dos Anéis", "Tolkien", "Fantasia", (short) 1954);
-        biblioteca.adicionarLivro("Dom Casmurro", "Machado de Assis", "Romance", (short) 1899);
-        biblioteca.adicionarLivro("1984", "George Orwell", "Ficção Científica", (short) 1949);
+//        biblioteca.adicionarLivro("Java Básico", "Deitel", "Programação", (short) 2019);
+//        biblioteca.adicionarLivro("Clean Code", "Robert C. Martin", "Engenharia", (short) 2008);
+//        biblioteca.adicionarLivro("O Senhor dos Anéis", "Tolkien", "Fantasia", (short) 1954);
+//        biblioteca.adicionarLivro("Dom Casmurro", "Machado de Assis", "Romance", (short) 1899);
+//        biblioteca.adicionarLivro("1984", "George Orwell", "Ficção Científica", (short) 1949);
 
         do {
             System.out.println("\n===== MENU BIBLIOTECA =====");

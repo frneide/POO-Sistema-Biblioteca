@@ -88,7 +88,8 @@ public class Biblioteca {
         Livro livro = buscarLivro(idLivro);
         if (livro == null) throw new EmprestimoInvalido("Livro não encontrado.");
 
-        Emprestimo e = new Emprestimo(usuario, livro); // O construtor de Emprestimo já chama livro.emprestar()
+        // O construtor de Emprestimo já chama livro.emprestar(), que lança LivroIndisponivel
+        Emprestimo e = new Emprestimo(usuario, livro);
         usuario.adicionarEmprestimo(e);
     }
 
@@ -96,13 +97,13 @@ public class Biblioteca {
         boolean encontrou = false;
         for (Emprestimo e : usuario.getHistorico()) {
             if (e.getLivro().getId() == idLivro && e.isAtivo()) {
-                e.devolverLivro(); // Isso chama livro.devolver() que lança EmprestimoInvalido
+                e.devolverLivro(); // Chama livro.devolver() que lança EmprestimoInvalido
                 encontrou = true;
                 break;
             }
         }
         if (!encontrou) {
-            throw new EmprestimoInvalido("Empréstimo ativo não encontrado para este usuário e livro.");
+            throw new EmprestimoInvalido("Empréstimo ativo não encontrado para este utilizador.");
         }
     }
 
@@ -206,6 +207,10 @@ public class Biblioteca {
 
     public ArrayList<Livro> getLivros() {
         return livros;
+    }
+
+    public ArrayList<Usuario> getUsuarios() {
+        return usuarios;
     }
 
 
