@@ -37,12 +37,13 @@ public class Usuario {
     public String getTelefone() { return telefone; }
     public ArrayList<Emprestimo> getHistorico() { return historico; }
 
+
     public String toCSV() {
-        // Garante que se o campo for null, salve apenas um espaço vazio
         String e = (email == null) ? "" : email;
-        LocalDate d = (dataNasc == null) ? LocalDate.parse("") : dataNasc;
+        String d = (dataNasc == null) ? LocalDate.now().toString() : dataNasc.toString();
         String t = (telefone == null) ? "" : telefone;
 
+        // Nota: O prefixo deve bater com o que a Biblioteca lê (USUARIO)
         return "USUARIO;" + id + ";" + nome + ";" + e + ";" + d + ";" + t;
     }
 }
